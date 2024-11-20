@@ -1,0 +1,655 @@
+<!doctype html>
+<html lang="en">
+    <head>
+	<script type="text/javascript" src="./resources/master/ol-ext-master/dist/jquery-1.11.0.min.js"></script>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes"> 
+
+<!-- .css random versioning -->		
+  <script>
+    $(document).ready(function() {
+      $('link[rel="stylesheet"]').each(function() {
+        var cssFile = $(this).attr('href');
+        var version = Math.random().toString(36).substring(7); // Genera una stringa casuale come versione
+        var updatedCssFile = cssFile + '?v=' + version;
+
+        // Sostituisce l'URL originale con l'URL contenente il parametro di versioning casuale
+        $(this).attr('href', updatedCssFile);
+      });
+    });
+  </script>	
+		<script type="text/javascript" src="./resources/master/ol-ext-master/dist/ol.js"></script>	
+		<link rel="stylesheet" href="./resources/ol.css">
+
+		<link rel="stylesheet" href="./resources/master/ol-ext-master/dist/ol-ext.css"/>
+		<script type="text/javascript" src="./resources/master/ol-ext-master/dist/ol-ext.js"></script>
+		<script src="./resources/master/ol-ext-master/dist/polyfill.min.js?features=requestAnimationFrame,Element.prototype.classList,URL,Object.assign"></script>	
+		<script src="./resources/master/ol-ext-master/dist/FontAwesome5Def.js"></script>
+		<link rel="stylesheet" type="text/css" href="./resources/master/font-awesome-master/js/fontawesome-all.css">
+		<link rel="stylesheet" href="./resources/master/sidebar-v2-master/css/ol3-sidebar.css">
+		<script src="./resources/master/sidebar-v2-master/js/ol3-sidebar.js"></script>
+
+		<script src="./resources/master/ol-street-view-master/dist/interact.min.js" data-no-source-map></script>
+		<script src="./resources/master/ol-street-view-master/dist/ol-street-view.js" data-no-source-map></script>	
+		<link rel="stylesheet" href="./resources/master/ol-street-view-master/dist/css/ol-street-view.css" />
+		<!--<link rel="stylesheet" href="./resources/fontawesome-all.min.css">-->
+        <!--<link rel="stylesheet" href="./resources/ol-layerswitcher.css">-->
+        <link rel="stylesheet" href="./resources/thanks_for_the_coffee.css">
+		<script src="./resources/thanks_for_the_coffee_expressions.js"></script>
+		<script src="./resources/master/proj4js-master/dist/proj4.js"></script>
+        <script src="./resources/polyfills.js"></script>
+        <script src="./resources/functions.js"></script>
+        <!--<script src="./resources/ol-layerswitcher.js"></script>-->
+		<link href="./resources/master/ol-geocoder-master/dist/ol-geocoder.css" rel="stylesheet">
+        <script src="./resources/master/ol-geocoder-master/dist/ol-geocoder.js"></script>		
+
+		<link rel="stylesheet" href="./resources/o.gis/o.gis_style.css">
+  <!-- layerswitcher and legend attribution -->
+	<style>
+		.ol-layerswitcher.ol-forceopen .panel-container {
+		width: 353px;
+		}		
+		.ol-layerswitcher .panel li label {
+		width: 220px;
+		}		
+		.ol-touch .panel-container {
+			width: 270px!important;
+		}
+		.legend-attribution ul {
+			display: none;
+			width: 330px;
+		}
+		#form_logo {
+			display: none;
+		}
+		#sidebar {
+			display: none;
+		}
+	</style>
+	<style>
+	html, body, #map {
+		width: 100%;
+		height: 100%;
+		padding: 0;
+		margin: 0;
+	}
+	.input-container {
+		position: absolute;
+		top: 8px;
+		left: 16px;
+		background-color: white;
+		padding: 5px;
+		z-index: 1;
+		border-radius: 5px;
+		box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.5);
+	}
+
+	.input-container input {
+		width: 100px;
+		margin-right: 10px;
+		padding: 3px;
+	}
+
+	.input-container button {
+		margin-top: 5px; /* Espaçamento acima do botão */
+	}
+
+	.popup-container {
+		display: none; /* Inicialmente oculto */
+		position: fixed;
+		z-index: 1000;
+		left: 0;
+		top: 0;
+		width: 100%;
+		height: 100%;
+		overflow: auto; /* Ativa o scroll */
+		background-color: rgba(0, 0, 0, 0.7); /* Fundo semi-transparente */
+	}
+
+	.popup-content {
+		position: relative;
+		margin: 5% auto;
+		padding: 20px;
+		background-color: white;
+		width: 80%;
+		max-width: 800px;
+		max-height: 80%;
+		overflow: auto; /* Scroll para conteúdo grande */
+		border-radius: 8px;
+	}
+
+	.popup-image {
+		width: 100%;
+		height: auto;
+	}
+
+	.close-button {
+		position: absolute;
+		top: 5px;
+		right: 5px;
+		color: #aaa;
+		font-size: 30px;
+		font-weight: bold;
+		cursor: pointer;
+	}
+
+	.close-button:hover,
+	.close-button:focus {
+		color: black;
+		text-decoration: none;
+		cursor: pointer;
+	}
+
+	</style>
+        <title>Toponímia e Nr. Polícia</title>
+    </head>
+    <body>
+<!-- map -->
+        <div id="map" style="position: relative;">
+            <div id="popup" class="ol-popup">
+                <a href="#" id="popup-closer" class="ol-popup-closer"></a>
+                <div id="popup-content"></div>
+            </div>
+			<div id="popup-image" class="popup-container">
+				<div class="popup-content">
+					<span id="close-popup" class="close-button">&times;</span>
+					<img src="./resources/sig_coord_limit.png" alt="Limites" class="popup-image">
+				</div>
+			</div>
+
+			<div class="input-container">
+				<label><b>CAD. PREDIAL</b> - EPSG: 20790 <i>(ex: X: 206783 Y: 418536)</i></label><br>
+				<label for="x-coord">X:</label>
+				<input type="text" id="x-coord" value="">
+				<label for="y-coord">Y:</label>
+				<input type="text" id="y-coord" value="">
+				<button id="update-pin">Localizar</button>
+				<button id="clean-pin">Limpar</button>
+				<button id="explica_coord">Limites</button>
+			</div>
+
+			<!--form logo -->
+			<div id="form_logo" style="position:absolute; z-index:1">
+			<label><a href="./index.html"><img src="./resources/stemma.png" align="left" height="60" title='Reset map'></img></a></label>
+			<h1 align="center">Toponímia e Nr. Polícia</h1>
+			</div>
+			<!-- form query wms wfs -->	  
+			<form id="form_querywmswfs" style="display: none; height:74px!important">
+				<label><b>Query WMS layers only</b><br /><a>Turn on the WMS layers, click on the map and wait for the result. The response varies based on the speed of the external server.</a></label>
+			</form>	
+			<!-- form popup all -->	  
+			<form id="form_popupall" style="display: none">
+				<label><b>Query with the unified popup</b></label>
+			</form>
+
+			<!-- print button
+				<div id="print" class="print print-hover" style="position:absolute; z-index:1">
+				<button onClick="window.print()" class="fa fa-print"></button>
+				</div> -->
+			<!-- full screen  -->			
+				<div id="toggle-fs" class="ol-control expand" style="position:absolute; z-index:1">
+				<button class="toggle-fs-button fa fa-expand"></button>
+				</div> 
+			<!--form o.gis -->
+			<div id="form_opengis" style="position:absolute; z-index:1">
+			<a href="https://www.opengis.it/" target="_blank"><label><img src="./resources/o.gis.png" title="O.GIS"></img></label></a>
+			</div>
+			<!-- sidebar-v2 start -->
+			  <div id="sidebar" class="sidebar collapsed">
+					<!-- Nav tabs -->
+					<div class="sidebar-tabs">
+						<ul role="tablist">
+							<li><a href="#tab1" title="TAB 1" role="tab"><i class="fa fa-bars"></i></a></li>
+							<li><a href="#tab2" title="TAB 2" role="tab"><strong style="font-size: 13px; font-family: 'arial';">TAB2</strong></a></li>
+							<li><a href="#tab3" title="TAB 3" role="tab"><strong style="font-size: 13px; font-family: 'arial';">TAB3</strong></a></li>
+							<li><a href="#tab4" title="TAB 4" role="tab"><strong style="font-size: 13px; font-family: 'arial';">TAB4</strong></a></li>
+						</ul>
+						<ul role="tablist">
+							<li class="disabled"><a href="#gear" role="tab"><i class="fa fa-gear"></i></a></li>
+							<li class="disabled"><a href="#messages" role="tab"><i class="fa fa-envelope"></i></a></li>
+							<li class="disabled"><a href="#profile" role="tab"><i class="fa fa-user"></i></a></li>
+							<li class="disabled"><a href="#share" title="Share" role="tab"><i class="fa fa-share-alt"></i></a></li>
+							<li><a href="#download" title="Download" role="tab"><i class="fa fa-download"></i></a></li>
+							<li onClick="window.print()"><a title="Print" role="tab"><i class="fa fa-print"></i></a></li>
+							<li><a href="#info" title="Info" role="tab"><i class="fa fa-info"></i></a></li>
+						</ul>
+					</div>
+
+					<!-- Tab panes -->
+					<div class="sidebar-content">
+						<div class="sidebar-pane" id="tab1">
+							<h1 class="sidebar-header">
+								The System
+								<span class="sidebar-close"><i class="fa fa-caret-left"></i></span>
+							</h1>
+							<iframe frameborder="0" scrolling="auto"
+							style="height:90%; width:99%; position: absolute; top: 50px; left: 0; bottom: 0; right: 0; "
+							src="./resources/html_sidebar_content/01_SIT.htm"></iframe>
+						</div>
+						<div class="sidebar-pane" id="tab2">
+							<h1 class="sidebar-header">
+								TITLE TAB 1
+								<span class="sidebar-close"><i class="fa fa-caret-left"></i></span>
+							</h1>
+							<p class="lorem">Under construction</p>
+						</div>
+						<div class="sidebar-pane" id="tab3">
+							<h1 class="sidebar-header">
+								TITLE TAB 2
+								<span class="sidebar-close"><i class="fa fa-caret-left"></i></span>
+							</h1>
+							<p class="lorem">Under construction</p>
+						</div>
+						<div class="sidebar-pane" id="tab4">
+							<h1 class="sidebar-header">
+								TITLE TAB 3
+								<span class="sidebar-close"><i class="fa fa-caret-left"></i></span>
+							</h1>
+							<p class="lorem">Under construction</p>
+						</div>
+						<div class="sidebar-pane" id="download">
+							<h1 class="sidebar-header">
+							Download
+							<span class="sidebar-close"><i class="fa fa-caret-left"></i></span></h1>
+							<iframe frameborder="0" scrolling="auto"
+							style="height:90%; width:99%; position: absolute; top: 50px; left: 0; bottom: 0; right: 0; "
+							src="./resources/html_sidebar_content/05_GEOPACKAGE.htm"></iframe>
+
+						</div>
+						<div class="sidebar-pane" id="info">
+							<h1 class="sidebar-header">
+							Info
+							<span class="sidebar-close"><i class="fa fa-caret-left"></i></span></h1>
+							<iframe frameborder="0" scrolling="auto"
+							style="height:90%; width:99%; position: absolute; top: 50px; left: 0; bottom: 0; right: 0; "
+							src="./resources/html_sidebar_content/06_INFO.htm"></iframe>
+
+						</div>
+				</div> <!-- sidebar content end -->
+			</div> <!-- sidebar collapsed end -->  <!-- sidebar-v2 end -->
+        </div> <!-- map end -->
+        <!--
+        <script src="resources/thanks_for_the_coffee_expressions.js"></script>
+<script src="resources/proj4.js"></script>
+		-->
+        <script>proj4.defs('EPSG:3763','+proj=tmerc +lat_0=39.6682583333333 +lon_0=-8.13310833333333 +k=1 +x_0=0 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs');</script>
+        <!--
+		<script src="resources/polyfills.js"></script>
+        <script src="./resources/functions.js"></script>
+        <script src="./resources/ol.js"></script>
+        <script src="./resources/ol-layerswitcher.js"></script>
+
+
+		-->
+		<script src="layers/Toponmia.js"></script><script src="layers/NrdePolcia.js"></script><script src="layers/Lugares.js"></script><script src="layers/CAOP.js"></script>
+        <script src="styles/Toponmia_style.js"></script><script src="styles/NrdePolcia_style.js"></script><script src="styles/Lugares_style.js"></script><script src="styles/CAOP_style.js"></script>
+		<!--
+        <script src="./layers/layers.js" type="text/javascript"></script>
+        @thanks_for_the_coffeefullJS@
+		-->
+<!-- layers definition -->
+		<script src="./layers/layers.js" type="text/javascript"></script>
+
+<!-- thanks_for_the_coffee.js and o.gis.js-->	  	
+		<script src="./resources/Autolinker.min.js" data-no-source-map></script>
+		<script src="./resources/thanks_for_the_coffee.js"></script>
+		<script src="./resources/o.gis/o.gis.js"></script>	  
+ <!-- Geocoder search language -->
+<script>
+	geocoder.options.lang = 'pt-PT';   // it-IT, pt-BR, fr-FR
+</script> 
+
+<!-- bookmark
+<script>
+		var bm = new ol.control.GeoBookmark({
+			namespace: 'demo',
+			title: "Zoom Localita'",
+			editable: false,
+		  });
+		  bm.setBookmarks({
+			  Quartiere_1: {pos:ol.proj.transform([2351142.20, 4842857.50], 'EPSG:3004', 'EPSG:25832'), zoom:14},
+			  Quartiere_2: {pos:ol.proj.transform([2352404,4841605], 'EPSG:3004', 'EPSG:25832'), zoom:14},
+			  Quartiere_3: {pos:ol.proj.transform([2355410,4838774], 'EPSG:3004', 'EPSG:25832'), zoom:14},
+			  Quartiere_4: {pos:ol.proj.transform([2357220,4839534], 'EPSG:3004', 'EPSG:25832'), zoom:14},
+			  });
+		  map.addControl(bm);
+</script>-->
+<script>
+	// Insert combo box for source choice
+	var selectElt = document.createElement('select');
+	var buttonElt = search.element.querySelector('button');
+	search.element.insertBefore(selectElt, buttonElt);
+
+	// Add options
+	['Lugares', 'Toponímia'].forEach(function(l) {
+		ol.ext.element.create('OPTION', {
+			text: l,
+			parent: selectElt
+		});
+	});
+
+	// Function for executing actions
+	function handleComboBoxChange() {
+		search.clearHistory();
+		search.setInput('');
+
+		// Remove previous event listeners
+		search.un('select', onSelectLugares);
+		search.un('select', onSelectToponimia);
+
+		if (selectElt.value === 'Lugares') {
+			search.setSource(jsonSource_Lugares);
+			search.set('property', 'nome_lugar');
+			// Attach the new event listener
+			search.set('placeholder', 'Escreva nome do Lugar...');
+			search.on('select', onSelectLugares);
+		} else if (selectElt.value === 'Toponímia') {
+			search.setSource(jsonSource_Toponmia);
+			search.set('property', 'nome_completo');
+			// Attach the new event listener
+			search.set('placeholder', 'Escreva nome da Via...');
+			search.on('select', onSelectToponimia);
+		}
+		// Reset placeholder
+		var inputField = search.element.querySelector('.ol-search input');
+		inputField.placeholder = search.get('placeholder');
+	}
+
+	// Function to handle LUGARES selection
+	function onSelectLugares(e) {
+		Luagares.setVisible(true);
+	}
+
+	// Function to handle Toponímia selection
+	function onSelectToponimia(e) {
+		Toponimia.setVisible(true);
+	}
+
+	// Change event
+	selectElt.addEventListener('change', handleComboBoxChange);
+
+	// Trigger change event to activate the first option
+	selectElt.dispatchEvent(new Event('change'));
+
+</script>
+<!-- overview map -->
+<!--<script>
+			var MaxMapExtent = map.getView().getProperties().extent;
+			var ov = new ol.control.Overview({
+				layers: [
+					new ol.layer.Tile({
+					source: new ol.source.OSM()
+					}),
+				],
+
+				// google satellite example
+			/* 	layers: [
+					new ol.layer.Tile({
+					source: new ol.source.XYZ({
+						url: 'https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}'
+					})
+					}),
+				], */
+
+				// opentopo example
+			/* 	layers: [
+					new ol.layer.Tile({
+					source: new ol.source.XYZ({
+						url: 'https://tile.opentopomap.org/{z}/{x}/{y}.png'
+					})
+					}),
+				], */
+				//static image example, set also minZoom and maxZoom
+			/* 	layers: [
+					new ol.layer.Image({
+						source: new ol.source.ImageStatic({
+							url: './resources/minimap.png',
+							imageExtent: MaxMapExtent,
+						})
+					})
+				], */
+
+			  //projection: 'EPSG:25832',
+			  //minZoom: '10.5',
+			  //maxZoom: '12',
+			  rotation: true,
+			  align: 'bottom-left',
+			  //panAnimation: "elastic"
+			});
+			map.addControl(ov);
+			// Select button
+			var overviewbuttontitle = $('div.ol-overview button');
+			// Set button title
+			overviewbuttontitle.attr('title', 'Minimap');
+</script>-->
+<!-- mouse position coordinates  -->
+<!--<script>
+		showProjection = 'EPSG:4326'
+		mousePositionDefault.setProjection(ol.proj.get(showProjection));
+</script>-->
+
+<!-- streetview api key -->
+	<script>
+	opt_options.apiKey = ''; //define your own apikey to remove "for development purposes only"
+	streetView = new StreetView(opt_options);
+	map.addControl(streetView);
+	streetView.on('streetViewInit', function () {				
+		if (typeof opt_options.apiKey === 'undefined' || opt_options.apiKey === '') {
+		  $('#ol-street-view--panorama').css('filter', 'invert(1)');
+		}
+	});
+	</script>
+<!-- attribution -->
+	<script>	
+	// Define your own static attribution
+	attributionList.innerHTML = `
+		<a>Data Source: </a>
+<!--		<a href="https://www.openstreetmap.org/" target="_blank">OpenStreetMap</a> &middot;-->
+		<a href="https://www.google.com/maps" target="_blank">GoogleMaps</a>
+	`;
+	</script>
+
+	<!--<script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.7.5/proj4.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/ol/proj/proj4.js"></script>
+	<script>
+		// Registrar as projeções EPSG:20790 e EPSG:3763
+		proj4.defs("EPSG:20790", "+proj=tmerc +lat_0=39.6666666666667 +lon_0=1 +k=1 +x_0=200000 +y_0=300000 +ellps=intl +pm=lisbon +towgs84=-288.885,-91.744,126.244,-1.691,0.41,-0.211,-4.598 +units=m +no_defs +type=crs");
+		proj4.defs("EPSG:3763", "+proj=tmerc +lat_0=39.6682583333333 +lon_0=-8.13310833333333 +k=1 +x_0=0 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +type=crs");
+		proj4.defs("EPSG:4326", "+proj=longlat +datum=WGS84 +no_defs +type=crs");
+		ol.proj.proj4.register(proj4);
+
+		// Criar a camada e a feature do pino
+		var pinFeature = new ol.Feature();
+		var vectorSource = new ol.source.Vector({
+			features: [pinFeature]
+		});
+
+		var pinLayer = new ol.layer.Vector({
+			source: vectorSource,
+			title: '<img src="./resources/pino.png" style="width:16px; height:16px;" /> Coord. Cad. Predial', // Ícone e nome na legenda
+			permalink: "CadernetaPredial",
+			popuplayertitle: "Caderneta Predial"
+		});
+
+		map.addLayer(pinLayer);
+
+		// Função para validar a entrada dos campos X e Y
+		function validateInput(value) {
+			var regex = /^\d{1,6}$/; // Expressão regular para permitir apenas números inteiros de 1 a 6 dígitos
+			return regex.test(value);
+		}
+
+		// Função para atualizar a posição do pino
+		function updatePinPosition(x, y) {
+			if (!validateInput(x) || !validateInput(y)) {
+				alert('Por favor, insira valores válidos para X e Y (até 6 dígitos).');
+				return;
+			}
+
+			// Converter de EPSG:20790 para EPSG:3763
+			var coordinates20790 = [parseFloat(x), parseFloat(y)];
+			var coordinates3763 = ol.proj.transform(coordinates20790, 'EPSG:20790', 'EPSG:3763');
+
+			pinFeature.setGeometry(new ol.geom.Point(coordinates3763));
+
+			// Definir o estilo do pino
+			var pinStyle = new ol.style.Style({
+				image: new ol.style.Icon({
+					anchor: [0.5, 1],
+					src: './resources/pino.png',
+					scale: 0.1
+				}),
+				text: new ol.style.Text({
+					text: 'Caderneta Predial', // Texto fixo para a label
+					offsetY: -30, // Ajuste a posição vertical do texto
+					font: '12px sans-serif', // Fonte do texto
+					fill: new ol.style.Fill({
+						color: '#000' // Cor do texto
+					}),
+					stroke: new ol.style.Stroke({
+						color: '#fff', // Cor da borda do texto
+						width: 2 // Largura da borda
+					})
+				})
+			});
+			pinFeature.setStyle(pinStyle);
+
+			// Centrar o mapa na nova posição do pino
+			map.getView().setCenter(coordinates3763);
+		}
+
+		// Função para limpar o pino e os campos de entrada
+		function clearPinAndInputs() {
+			// Remover a geometria do pino (isto apaga o pino do mapa)
+			pinFeature.setGeometry(null);
+
+			// Limpar os campos de entrada
+			document.getElementById('x-coord').value = '';
+			document.getElementById('y-coord').value = '';
+		}
+
+		// Configurar o evento de clique no botão "Localizar"
+		document.getElementById('update-pin').addEventListener('click', function() {
+			var x = document.getElementById('x-coord').value;
+			var y = document.getElementById('y-coord').value;
+			updatePinPosition(x, y);
+		});
+
+		// Configurar o evento de clique no botão "Limpar"
+		document.getElementById('clean-pin').addEventListener('click', clearPinAndInputs);
+	</script>-->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.7.5/proj4.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/ol/proj/proj4.js"></script>
+	<script>
+		// Registrar as projeções EPSG:20790 e EPSG:3763
+		proj4.defs("EPSG:20790", "+proj=tmerc +lat_0=39.6666666666667 +lon_0=1 +k=1 +x_0=200000 +y_0=300000 +ellps=intl +pm=lisbon +towgs84=-288.885,-91.744,126.244,-1.691,0.41,-0.211,-4.598 +units=m +no_defs +type=crs");
+		proj4.defs("EPSG:3763", "+proj=tmerc +lat_0=39.6682583333333 +lon_0=-8.13310833333333 +k=1 +x_0=0 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +type=crs");
+		proj4.defs("EPSG:4326", "+proj=longlat +datum=WGS84 +no_defs +type=crs");
+		ol.proj.proj4.register(proj4);
+
+		// Criar a camada e a feature do pino
+		var pinFeature = new ol.Feature();
+		var vectorSource = new ol.source.Vector({
+			features: [pinFeature]
+		});
+
+		var pinLayer = new ol.layer.Vector({
+			source: vectorSource,
+			title: '<img src="./resources/pino.png" style="width:16px; height:16px;" /> Coord. Cad. Predial', // Ícone e nome na legenda
+			permalink: "CadernetaPredial",
+			popuplayertitle: "Caderneta Predial"
+		});
+
+		map.addLayer(pinLayer);
+
+		// Função para validar a entrada dos campos X e Y
+		function validateInput(value, min, max) {
+			var regex = /^\d{1,6}$/; // Expressão regular para permitir apenas números inteiros de 1 a 6 dígitos
+			if (!regex.test(value)) {
+				return false;
+			}
+			var numValue = parseInt(value, 10);
+			return numValue >= min && numValue <= max;
+		}
+
+		// Função para atualizar a posição do pino
+		function updatePinPosition(x, y) {
+			if (!validateInput(x, 187473, 211080) || !validateInput(y, 402759, 420748)) {
+				alert('Por favor, insira valores válidos: X deve estar entre 187473 e 211080, e Y entre 402759 e 420748, que representam coordenadas abrangentes ao concelho de Vouzela');
+				return;
+			}
+
+			// Converter de EPSG:20790 para EPSG:3763
+			var coordinates20790 = [parseFloat(x), parseFloat(y)];
+			var coordinates3763 = ol.proj.transform(coordinates20790, 'EPSG:20790', 'EPSG:3763');
+
+			pinFeature.setGeometry(new ol.geom.Point(coordinates3763));
+
+			// Definir o estilo do pino
+			var pinStyle = new ol.style.Style({
+				image: new ol.style.Icon({
+					anchor: [0.5, 1],
+					src: './resources/pino.png',
+					scale: 0.1
+				}),
+				text: new ol.style.Text({
+					text: 'Caderneta Predial', // Texto fixo para a label
+					offsetY: -30, // Ajuste a posição vertical do texto
+					font: '12px sans-serif', // Fonte do texto
+					fill: new ol.style.Fill({
+						color: '#000' // Cor do texto
+					}),
+					stroke: new ol.style.Stroke({
+						color: '#fff', // Cor da borda do texto
+						width: 2 // Largura da borda
+					})
+				})
+			});
+			pinFeature.setStyle(pinStyle);
+
+			// Centrar o mapa na nova posição do pino
+			map.getView().setCenter(coordinates3763);
+		}
+
+		// Função para limpar o pino e os campos de entrada
+		function clearPinAndInputs() {
+			// Remover a geometria do pino (isto apaga o pino do mapa)
+			pinFeature.setGeometry(null);
+
+			// Limpar os campos de entrada
+			document.getElementById('x-coord').value = '';
+			document.getElementById('y-coord').value = '';
+		}
+
+		// Configurar o evento de clique no botão "Localizar"
+		document.getElementById('update-pin').addEventListener('click', function() {
+			var x = document.getElementById('x-coord').value;
+			var y = document.getElementById('y-coord').value;
+			updatePinPosition(x, y);
+		});
+
+		// Configurar o evento de clique no botão "Limpar"
+		document.getElementById('clean-pin').addEventListener('click', clearPinAndInputs);
+	</script>
+
+	<script>
+		document.getElementById('explica_coord').addEventListener('click', function() {
+			document.getElementById('popup-image').style.display = 'block';
+		});
+
+		document.getElementById('close-popup').addEventListener('click', function() {
+			document.getElementById('popup-image').style.display = 'none';
+		});
+
+		// Fecha o popup ao clicar fora do conteúdo
+		window.addEventListener('click', function(event) {
+			if (event.target == document.getElementById('popup-image')) {
+				document.getElementById('popup-image').style.display = 'none';
+			}
+		});
+	</script>
+	</body>
+</html>
